@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MICHAŁ — Street Art Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Permanent+Marker&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0c;
+            --surface: #131318;
+            --border: #1e1e26;
+            --yellow: #e8d44d;
+            --orange: #e8742a;
+            --pink: #d94f8c;
+            --purple: #6b3fa0;
+            --green: #4de86a;
+            --text: #f0ece4;
+            --text-dim: #6a6670;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* ── NOISE OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ── SPLATTER ACCENTS ── */
+        .splatter {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .splatter-1 {
+            width: 400px; height: 400px;
+            background: var(--yellow);
+            top: -100px; right: -100px;
+        }
+        .splatter-2 {
+            width: 300px; height: 300px;
+            background: var(--pink);
+            bottom: 10%; left: -80px;
+        }
+        .splatter-3 {
+            width: 250px; height: 250px;
+            background: var(--purple);
+            top: 50%; right: -50px;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 0 20px 80px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ── NAV / HEADER ── */
+        .header {
+            padding: 32px 0 48px;
+            text-align: center;
+            position: relative;
+        }
+
+        .artist-tag {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 42px;
+            color: var(--yellow);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            line-height: 1;
+            position: relative;
+            display: inline-block;
+        }
+
+        .artist-tag::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: -8px;
+            right: -8px;
+            height: 3px;
+            background: var(--orange);
+            transform: rotate(-1deg);
+        }
+
+        .artist-sub {
+            margin-top: 16px;
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        /* ── ARTWORK CARD ── */
+        .artwork-section {
+            margin-top: 16px;
+        }
+
+        .artwork-label {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 13px;
+            color: var(--green);
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .artwork-frame {
+            position: relative;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .artwork-frame::before {
+            content: 'ORYGINAŁ';
+            position: absolute;
+            top: 16px;
+            right: -32px;
+            background: var(--orange);
+            color: var(--bg);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 12px;
+            letter-spacing: 3px;
+            padding: 4px 40px;
+            transform: rotate(45deg);
+            z-index: 5;
+        }
+
+        .artwork-frame img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
+        }
+
+        /* drip effect below image */
+        .drip-bar {
+            height: 6px;
+            background: linear-gradient(90deg, 
+                var(--yellow) 0%, 
+                var(--orange) 25%, 
+                var(--pink) 50%, 
+                var(--purple) 75%, 
+                var(--green) 100%
+            );
+        }
+
+        /* ── ARTWORK INFO ── */
+        .artwork-info {
+            padding: 24px 0;
+        }
+
+        .artwork-title {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 28px;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .artwork-details {
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .artwork-details span {
+            color: var(--yellow);
+        }
+
+        /* price */
+        .price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .price {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            color: var(--yellow);
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .price-note {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        /* BUY BUTTON */
+        .btn-buy {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            background: var(--yellow);
+            color: var(--bg);
+            border: none;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 22px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .btn-buy:hover {
+            background: var(--orange);
+            transform: scale(1.02);
+        }
+
+        .btn-buy:active {
+            transform: scale(0.98);
+        }
+
+        /* ── SEPARATOR ── */
+        .sep {
+            margin: 40px 0;
+            height: 1px;
+            background: var(--border);
+            position: relative;
+        }
+
+        .sep::after {
+            content: '✕';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg);
+            padding: 0 12px;
+            color: var(--text-dim);
+            font-size: 10px;
+        }
+
+        /* ── MORE WORKS TEASER ── */
+        .more-section h3 {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 20px;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        .more-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .more-item {
+            position: relative;
+            aspect-ratio: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .more-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .more-item:hover img {
+            opacity: 1;
+        }
+
+        .more-item .coming {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 10, 12, 0.6);
+        }
+
+        .more-item .coming span {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 14px;
+            color: var(--yellow);
+            letter-spacing: 2px;
+            transform: rotate(-5deg);
+        }
+
+        /* ── ABOUT STRIP ── */
+        .about-strip {
+            margin-top: 48px;
+            padding: 24px;
+            background: var(--surface);
+            border-left: 3px solid var(--yellow);
+        }
+
+        .about-strip p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        .about-strip p strong {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            margin-top: 48px;
+            text-align: center;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--yellow);
+        }
+
+        .footer-copy {
+            font-size: 11px;
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { animation: fadeUp 0.5s ease both; }
+        .artwork-section { animation: fadeUp 0.5s ease 0.1s both; }
+        .artwork-info { animation: fadeUp 0.5s ease 0.2s both; }
+        .more-section { animation: fadeUp 0.5s ease 0.3s both; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 380px) {
+            .artist-tag { font-size: 32px; }
+            .price { font-size: 40px; }
+            .btn-buy { font-size: 18px; padding: 16px; }
+        }
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--yellow);
+            padding: 32px;
+            max-width: 380px;
+            width: 100%;
+            position: relative;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .modal-box h4 {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 18px;
+            color: var(--yellow);
+            margin-bottom: 12px;
+        }
+
+        .modal-box p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+        }
+        .modal-close:hover { color: var(--text); }
+
+    </style>
+</head>
+<body>
+
+<div class="splatter splatter-1"></div>
+<div class="splatter splatter-2"></div>
+<div class="splatter splatter-3"></div>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="header">
+        <h1 class="artist-tag">Michał</h1>
+        <p class="artist-sub">street art · illustration · originals</p>
+    </header>
+
+    <!-- FEATURED ARTWORK -->
+    <section class="artwork-section">
+        <p class="artwork-label">▸ Dostępna do kupienia</p>
+        <div class="artwork-frame">
+            <img src="circus-of-tongues.jpg" alt="Circus of Tongues — artwork by Michał">
+        </div>
+        <div class="drip-bar"></div>
+    </section>
+
+    <!-- ARTWORK INFO + BUY -->
+    <div class="artwork-info">
+        <h2 class="artwork-title">Circus of Tongues</h2>
+        <p class="artwork-details">
+            Flamaster na papierze · <span>oryginał</span> · 2025
+        </p>
+
+        <div class="price-row">
+            <span class="price">350 PLN</span>
+            <span class="price-note">wysyłka w cenie<br>cała Polska</span>
+        </div>
+
+        <a href="#" class="btn-buy" onclick="event.preventDefault(); showModal('buy')">KUP TERAZ →</a>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- MORE WORKS -->
+    <section class="more-section">
+        <h3>Więcej prac</h3>
+        <div class="more-grid">
+            <div class="more-item">
+                <img src="being-real-ii.jpg" alt="Being Real as a Competitive Sport II">
+                <div class="coming"><span>SOON</span></div>
+            </div>
+            <div class="more-item">
+                <img src="being-real-ii.jpg" alt="Upcoming work">
+                <div class="coming"><span>SOON</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <div class="about-strip">
+        <p>Tworzę surrealistyczne ilustracje flamastrami. Każda praca to oryginał - nie ma dwóch takich samych. Psychodeliczne formy, komiks, graffiti. Sztuka prosto z ulicy.</p>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="#" onclick="event.preventDefault(); showModal('ig')">Instagram</a>
+            <a href="#" onclick="event.preventDefault(); showModal('contact')">Kontakt</a>
+        </div>
+        <p class="footer-copy">&copy; Michał 2026</p>
+    </footer>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h4 id="modal-title"></h4>
+        <p id="modal-text"></p>
+    </div>
+</div>
+
+<script>
+const modals = {
+    buy: {
+        title: 'Stripe Checkout',
+        text: 'Tutaj klient zostanie przekierowany do bezpiecznej strony płatności (Stripe). Klikasz, płacisz kartą, gotowe.'
+    },
+    ig: {
+        title: 'Instagram',
+        text: 'Tutaj będzie przekierowanie do Twojego profilu na Instagramie.'
+    },
+    contact: {
+        title: 'Kontakt',
+        text: 'Tutaj wyskoczą Twoje dane kontaktowe - email, telefon, cokolwiek chcesz pokazać.'
+    }
+};
+
+function showModal(type) {
+    const m = modals[type];
+    document.getElementById('modal-title').textContent = m.title;
+    document.getElementById('modal-text').textContent = m.text;
+    document.getElementById('modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+</body>
+</html>
